@@ -11,33 +11,35 @@ function findChildByClassInclude(element: HTMLElement, include: string): HTMLEle
     return children.find((sub) => sub.className.includes(include)) as HTMLElement | undefined;
 }
 
-function findVideoElement(props: StreamContextProps): HTMLVideoElement {
-    const targetParent = props.target.parentElement!;
-    const videoWrapper = findChildByClassInclude(targetParent, "videoWrapper")!;
-    const engineVideo = findChildByClassInclude(videoWrapper, "media-engine-video")!;
-    return engineVideo.getElementsByTagName("video")[0];
+function findVideoElement(props: StreamContextProps): HTMLVideoElement | undefined {
+    const targetParent = props.target.parentElement; 
+    if (!targetParent) return undefined;
+    
+    const videoWrapper = findChildByClassInclude(targetParent, "videoWrapper");
+    if (!videoWrapper) return undefined;
+
+    const engineVideo = findChildByClassInclude(videoWrapper, "media-engine-video");
+    return engineVideo?.getElementsByTagName("video")[0];
 }
 
 export const StreamContext: NavContextMenuPatchCallback = (children, props: StreamContextProps) => {
-    const group = findGroupChildrenByChildId("watch", children)!;
-    const video = findVideoElement(props)!;
+    const group = findGroupChildrenByChildId("watch", children);
+    const video = findVideoElement(props);
+
+    if (!video) return;
 
     const { isPictureInPicture } = settings.use(["isPictureInPicture"]);
     
-    group.push(
+    group?.push(
         <Menu.MenuCheckboxItem
             id = "toggle-pip"
             label = "Picture in Picture"
-            checked = { isPictureInPicture }
+            checked = { isPictureInPicture! }
             action = { () => {
                 if (document.pictureInPictureElement == null) {
-                    video.requestPictureInPicture().then(() => {
-                        // settings.store.isPictureInPicture = true;
-                    });
+                    video.requestPictureInPicture();
                 } else {
-                    document.exitPictureInPicture().then(() => {
-                        // settings.store.isPictureInPicture = false;
-                    });
+                    document.exitPictureInPicture();
                 }
             }}
         />
